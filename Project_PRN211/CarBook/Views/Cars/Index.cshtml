@@ -1,10 +1,43 @@
-﻿@model IEnumerable<CarBook.Models.Car>
-
+﻿@model PaginatedList<Car>
 @{
     ViewData["Title"] = "Index";
-    //var car=ViewBag["abc"];
-    
+    ViewBag.active = 5;
+    int totalCount = (int)ViewData["TotalCount"];
 }
+<style>
+    .centered-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 5px;
+    }
+
+    .row.flex-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+    }
+
+    .col-md-6.flex-item {
+        flex-basis: calc(50% - 10px);
+    }
+
+    .button-group button {
+        background-color: white;
+        border: 1px solid #403f3f;
+        border-radius: 20px;
+        padding: 5px 10px;
+        margin: 5px;
+        text-decoration: none;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+        .button-group button:hover {
+            background-color: #fff;
+            color: white;
+            cursor: pointer;
+        }
+</style>
 
 
 <section class="hero-wrap hero-wrap-2 js-fullheight" style="background-image: url('assets/images/bg_3.jpg');" data-stellar-background-ratio="0.5">
@@ -20,113 +53,131 @@
 </section>
 
 
-<section class="ftco-section bg-light">
-    <div class="container">
-        <div class="row">
-            @foreach (var item in Model) {
-                <div class="col-md-4">
-                    <div class="car-wrap rounded ftco-animate">
-                        <div class="img rounded d-flex align-items-end" style="background-image: url(assets/images/car-5.jpg);">
-                        </div>
-                        <div class="text">
-                            <h2 class="mb-0"><a href="car-single.html">@Html.DisplayFor(modelItem => item.Name)</a></h2>
-                            <div class="d-flex mb-3">
-                                <span class="cat">@Html.DisplayFor(modelItem => item.Category.Name)</span>
-                                <p class="price ml-auto">$@Html.DisplayFor(modelItem => item.Price) <span>/day</span></p>
-                            </div>
-                            <p class="d-flex mb-0 d-block"><a href="#" class="btn btn-primary py-2 mr-1">Book now</a> <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-secondary py-2 ml-1">Details</a></p>
-                        </div>
-                    </div>
-                </div>
-            }
+<div class="container">
+
+
+
+    <div class="row justify-content-center mb-5">
+        <div class="col-md-7 text-center heading-section ftco-animate">
         </div>
-        <div class="row mt-5">
-            <div class="col text-center">
-                <div class="block-27">
-                    <ul>
-                        <li><a href="#">&lt;</a></li>
-                        <li class="active"><span>1</span></li>
-                        <li><a href="#">2</a></li>
-                        <li><a href="#">3</a></li>
-                        <li><a href="#">4</a></li>
-                        <li><a href="#">5</a></li>
-                        <li><a href="#">&gt;</a></li>
-                    </ul>
+    </div>
+    <div class="row justify-content-start flex-container">
+        <div class="col-md-6 ftco-animate flex-item" style="margin: 5px;">
+            <form asp-action="Index" method="get" class="search-form">
+                <div class="form-group" style="width: 65%;">
+                    <input type="text" class="form-control" placeholder="Search car by name, category, or price" name="SearchString" value="@ViewData["CurrentFilter"]">
+                    <span type="submit" value="Search"> <i class="icon icon-search" style="margin-top: -15px;"></i></span>
                 </div>
+            </form>
+        </div>
+        <div class="col-md-6 d-flex align-items-center flex-item" style="margin-top:-40px; ">
+            <div class="button-group ml-auto">
+                <span class="dropdown">
+                    <button class="dropdown-toggle" type="button" id="carBrandDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="icon-car"></i> Car Brand
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="carBrandDropdown">
+                        @foreach (var category in ViewData["CategoryList"] as List<Category>)
+                        {
+                            <a class="dropdown-item" asp-route-categoryId="@category.Id">@category.Name</a>
+                        }
+                    </div>
+                </span>
+               
+                <button>
+                    <a asp-action="Index" asp-route-electricCar="Electricity" asp-route-currentFilter="@ViewData["CurrentFilter"]" style="color: #424242;"><i class="icon-leaf"></i> Electric Vehicle</a>
+                </button>
+                <span class="dropdown">
+                    <button class="dropdown-toggle" type="button" id="carBrandDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <i class="icon-usd"></i> Unit Price
+                    </button>
+                    <div class="dropdown-menu" aria-labelledby="carBrandDropdown">
+                        <a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewData["SortPriceA"]" >Ascending</a>
+                        <a class="dropdown-item" asp-action="Index" asp-route-sortOrder="@ViewData["SortPriceD"]" >Decrease</a>
+                    </div>
+                </span>
+                
             </div>
         </div>
     </div>
-</section>
 
 
-<h1>Index</h1>
+
+
+
+
+
+    <div class="row">
+
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4">
+                <div class="car-wrap rounded ftco-animate">
+                    <div class="img rounded d-flex align-items-end" style="background-image: url(  @Html.DisplayFor(modelItem => item.Image));">
+                    </div>
+                    <div class="text">
+                        <h2 class="mb-0"><a href="car-single.html">@Html.DisplayFor(modelItem => item.Name)</a></h2>
+                        <div class="d-flex mb-3">
+                            <span class="cat">@Html.DisplayFor(modelItem => item.Category.Name)</span>
+                            <p class="price ml-auto">$@Html.DisplayFor(modelItem => item.Price) <span>/day</span></p>
+                        </div>
+                        <p class="d-flex mb-0 d-block"><a href="#" class="btn btn-primary py-2 mr-1">Book now</a> <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-secondary py-2 ml-1">Details</a></p>
+                    </div>
+                </div>
+            </div>
+        }
+
+
+    </div>
+
+    <div class="row mt-5">
+        <div class="col text-center">
+            <div class="block-27">
+                <ul>
+
+                    @{
+                        var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+                        var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+                    }
+                    <li class="left_btn">
+                        <a asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageIndex - 1)"
+                           asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                           asp-route-electricCar="@ViewData["CarElectric"]"
+                           asp-route-categoryId="@ViewData["CurrentCategory"]"
+                           class="btn btn-default @prevDisabled" style="font-size: 20px;">
+                            <i class="icon-chevron-left centered-icon" style="padding-bottom: 10px;"></i>
+                        </a>
+                    </li>
+                    @foreach (var i in Enumerable.Range(1, totalCount))
+                    {
+                        <li class="@Html.Raw(Model.PageIndex == i ? "active" : "")">
+                            <a asp-action="Index"
+                               asp-route-pageNumber="@i"
+                               asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                               asp-route-electricCar="@ViewData["CarElectric"]"
+                               asp-route-categoryId="@ViewData["CurrentCategory"]">@i</a>
+                        </li>
+                    }
+
+                    <li right_btn>
+                        <a asp-action="Index"
+                           asp-route-pageNumber="@(Model.PageIndex + 1)"
+                           asp-route-currentFilter="@ViewData["CurrentFilter"]"
+                           asp-route-electricCar="@ViewData["CarElectric"]"
+                           asp-route-categoryId="@ViewData["CurrentCategory"]"
+                           class="btn btn-default @nextDisabled" style="font-size: 20px;">
+                            <i class="icon-chevron-right centered-icon" style="padding-bottom: 10px;"></i>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <p>
     <a asp-action="Create">Create New</a>
 </p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.Name)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Description)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Image)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Price)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Category)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Property)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Feature)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Owner)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Description)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Image)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Price)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Category.Name)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Property.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Feature.Id)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Owner.Id)
-            </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-            </td>
-        </tr>
-}
-    </tbody>
-</table>
+

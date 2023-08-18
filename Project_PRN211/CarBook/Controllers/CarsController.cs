@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using CarBook.Models;
+using Microsoft.AspNetCore.Identity;
+
 
 namespace CarBook.Controllers
 {
@@ -19,12 +21,55 @@ namespace CarBook.Controllers
         }
 
         // GET: Cars
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(string currentFilter, string searchString, int? pageNumber, string electricCar, int? categoryId, string sortOrder)
         {
-            var carBookContext = _context.Cars.Include(c => c.Category).Include(c => c.Feature).Include(c => c.Property).Include(c => c.Owner);
-            //ViewData["abc"] = carBookContext.ToList();
-            ViewData["abc"] = carBookContext.ToList().Count;
-            return View(await carBookContext.ToListAsync());
+            IQueryable<Car> carsQuery = _context.Cars.Include(c => c.Category).Include(c => c.Feature).Include(c => c.Property).Include(c => c.Owner);
+
+            if (!string.IsNullOrEmpty(searchString))
+            {
+                carsQuery = carsQuery.Where(c => c.Name.Contains(searchString) || c.Category.Name.Contains(searchString) || c.Price.Contains(searchString));
+                pageNumber = 1;
+            }
+            else
+            {
+                searchString = currentFilter;
+            }
+            ViewData["CurrentFilter"] = searchString;
+            var categoryList = await _context.Categories.ToListAsync();
+            ViewData["CategoryList"] = categoryList;
+            ViewData["CurrentSort"] = sortOrder;
+            ViewData["SortPriceD"] = String.IsNullOrEmpty(sortOrder) ? "pricedesc" : "pricedesc";
+            ViewData["SortPriceA"] = sortOrder == "priceasc" ? "priceasc" : "priceasc";
+
+            // Lọc theo electricCar 
+            if (electricCar != null)
+            {
+                carsQuery = carsQuery.Where(c => c.Property.Fuel == "Electricity");
+                ViewData["CarElectric"] = "Electricity";
+            }
+            // Lọc theo CategoryID 
+            if (categoryId != null)
+            {
+                carsQuery = carsQuery.Where(c => c.CategoryID == categoryId);
+                ViewData["CurrentCategory"] = categoryId;
+            }
+            switch (sortOrder)
+            {
+                case "priceasc":
+                    carsQuery = carsQuery.OrderBy(c => c.Price);
+                    break;
+                case "pricedesc":
+                    carsQuery = carsQuery.OrderByDescending(c => c.Price);
+                    break;
+                default:                
+                    break;
+            }
+
+            int totalCount = await carsQuery.CountAsync();
+            int dividedValue = (int)Math.Ceiling(totalCount / (double)9);
+            ViewData["TotalCount"] = dividedValue;
+            int pageSize = 9;
+            return View(await PaginatedList<Car>.CreateAsync(carsQuery.AsNoTracking(), pageNumber ?? 1, pageSize));
         }
 
         // GET: Cars/Details/5
@@ -46,7 +91,13 @@ namespace CarBook.Controllers
                 return NotFound();
             }
 
-            return View(car);
+			var carsWithSameCategory = await _context.Cars
+			   .Include(p => p.Category)
+			   .Where(p => p.Category.Id == car.Category.Id && p.Id != id)
+			   .ToListAsync();
+
+			ViewData["CartsWithSameCategory"] = carsWithSameCategory;
+			return View(car);
         }
 
         // GET: Cars/Create
@@ -54,7 +105,7 @@ namespace CarBook.Controllers
         {
             ViewData["CategoryID"] = new SelectList(_context.Categories, "Id", "Name");
             ViewData["FeatureID"] = new SelectList(_context.Features, "Id", "Id");
-            ViewData["OwnerID"] = new SelectList(_context.Set<AppUser>(), "Id", "Id");
+            ViewData["OwnerID"] = new SelectList(_context.Set<IdentityUser>(), "Id", "Id");
             ViewData["PropertyID"] = new SelectList(_context.Properties, "Id", "Id");
             return View();
         }
@@ -74,7 +125,7 @@ namespace CarBook.Controllers
             }
             ViewData["CategoryID"] = new SelectList(_context.Categories, "Id", "Name", car.CategoryID);
             ViewData["FeatureID"] = new SelectList(_context.Features, "Id", "Id", car.FeatureID);
-            ViewData["OwnerID"] = new SelectList(_context.Set<AppUser>(), "Id", "Id", car.OwnerID);
+            ViewData["OwnerID"] = new SelectList(_context.Set<IdentityUser>(), "Id", "Id", car.OwnerID);
             ViewData["PropertyID"] = new SelectList(_context.Properties, "Id", "Id", car.PropertyID);
             return View(car);
         }

@@ -22,21 +22,21 @@ namespace CarBook.Models
         [ForeignKey("Category")]
         [Required]
         public int CategoryID { get; set; }
-        public Category Category { get; set; }
+        public Category? Category { get; set; }
 
         [ForeignKey("Property")]
         [Required]
         public int PropertyID { get; set; }
-        public Property Property { get; set; }
+        public Property? Property { get; set; }
 
         [ForeignKey("Feature")]
         [Required]
         public int FeatureID { get; set; }
-        public Feature Feature { get; set; }
+        public Feature? Feature { get; set; }
 
         [ForeignKey("AppUser")]
         [DataType("nvarchar(450)")]
         public string OwnerID { get; set; }
-        public IdentityUser Owner { get; set; }
+        public IdentityUser? Owner { get; set; }
     }
 }
